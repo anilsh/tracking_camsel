@@ -1,8 +1,8 @@
 
-# Stratified Experience Replay (SER) with Deep Q learning
-** PyTorch implementation of our paper titled _Stratified Sampling Based Experience Replay for Efficient Camera Selection Decisions_,  2020 
+# Intelligent Camera Selection Decisions for Target Tracking in a Camera Network
+** PyTorch implementation of our paper titled _Intelligent Camera Selection Decisions for Target Tracking in a Camera Network_, WACV 2022 
 
-_Anil Sharma, Mayank Pal, Saket Anand, Sanjit K. Kaul_
+_Anil Sharma, Saket Anand, Sanjit K. Kaul_
 
 [[Paper](https://www.computer.org/csdl/proceedings-article/bigmm/2020/09232593/1o56ALOzkeA)] [[BibTeX](https://www.computer.org/csdl/api/v1/citation/bibtex/proceedings/1o56xuliEpi/09232593)]
 
