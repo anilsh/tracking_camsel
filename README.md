@@ -7,17 +7,7 @@ _Anil Sharma, Saket Anand, Sanjit K. Kaul_
 [[Paper](https://www.computer.org/csdl/proceedings-article/bigmm/2020/09232593/1o56ALOzkeA)] [[BibTeX](https://www.computer.org/csdl/api/v1/citation/bibtex/proceedings/1o56xuliEpi/09232593)]
 
 ---
-Target Tracking in a Camera Networks is the problem of determining the location of the target at all times as the target moves in different camera field of views. The input is the video sequence  of all cameras and the initial location of the target and the output should be the trajectory of the target whose each instance contain (c,x,y), where c is the camera index and (x,y) is the spatial location (or bounding box) in the camera c. 
-
-In general, the related methods solve this problem in a two-step framework. First, SCT (single camera tracking) is applied to identify the trajectory of the target within a single camera FOV. Second, ICT (inter-camera tracking) is performed to resolve handovers by finding associations for the target tracked by SCT. This association is computationally expensive. We proposed an intelligent method for scheduling cameras of the person trajectory using reinforcement learning. We have shown that our method subtantially reduces the number of frames required to be processed at the cost of a small reduction in recall. We have used NLPR MCT dataset, which is a real multi-camera multi-target tracking benchmark. 
-
-In brief, our method is also two-step (but can be run online). First, it selects a camera index where the target is likely to be present. Second, in the selected camera it finds the target using re-identification. We didn't use re-identification but simulated errors in a typical re-identification pipeline.
-
-In this repository, we provide MATLAB code to run and evaluate our method. This code has been written over the past years as part of my PhD research. The MCT literature proposed all vision based method but we didn't cater to the vision challenges (particularly in this paper).
-
-The camera selection results are shown in the following video on NLPR Dataset3:
-![camera selection performance on NLPR dataset-3](https://github.com/anilsh/scheduleQueries/blob/master/video_gif_db3_T2_noGT.gif)
-
+Camera selections were shown to be highly crucial for target tracking in a camera network but learning a camera selection policy is highly challenging for larger camera networks. In this work, we show the efficacy of representation learning to reduce training time and to improve camera selection performance.
 
 ---
 
