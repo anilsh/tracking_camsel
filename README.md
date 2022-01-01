@@ -4,73 +4,53 @@
 
 _Anil Sharma, Saket Anand, Sanjit K. Kaul_
 
-[[Paper](https://www.computer.org/csdl/proceedings-article/bigmm/2020/09232593/1o56ALOzkeA)] [[BibTeX](https://www.computer.org/csdl/api/v1/citation/bibtex/proceedings/1o56xuliEpi/09232593)]
+[[Paper](https://www.computer.org/csdl/)] [[BibTeX](https://www.computer.org/csdl/1o56xuliEpi/09232593)]
 
 ---
-Camera selections were shown to be highly crucial for target tracking in a camera network but learning a camera selection policy is highly challenging for larger camera networks. In this work, we show the efficacy of representation learning to reduce training time and to improve camera selection performance.
+Camera selections were shown to be highly crucial for target tracking in a camera network but learning a camera selection policy is highly challenging for larger camera networks. In this work, we show the efficacy of representation learning to reduce training time and also to improve camera selection performance. We also train the RL policy in a semi-supervised way.
 
 ---
 
 ## Code
 
 The code is organized as follows:
-1. ```main_q_dbx_icaps.m``` is the main file to call training and testing function for a sub-dataset x. Please note that sub-dataset-1 and 2 share same network topology and hence only one model is trained for both. 
-2. All folder names are self-explanatory and you don't need to edit any of the file inside any folder to reproduce the results.
+1. ```scripts``` is the main folder from where training and testing scripts can be found. All codes are in jupyter notebook. It also contains notebook to reproduce the plots from the paper. It has four subfolders, supervised: for training/testing a policy with supervised training, semisup: for training in a semi-supervised manner, unsupervised: for training in an unsupervised way using a re-id based method, and representation: includes models trained for auto-encoder.
+2. ```data``` It contains data files for all datasets (all 4 sets of NLPR MCT, Duke). It also contains scripts to read these data files and also the training testing split as used in our ICAPS [paper](https://github.com/anilsh/scheduleQueries). Original images of the dataset can be downloaded from the dataset website. 
+3. ```results``` It contains all results of our paper that can be used to generate the tables and figures of the paper
 
 ## Downloading the data
 
 ### NLPR MCT benchmark dataset
 
 Download the dataset from the [[official website](http://mct.idealtest.org/Datasets.html)] . This dataset contains four sub-datasets and we have used all four in our method.
+We have converted all datasets into trajectory files and only these are used by our method. These are placed in ```data``` folder and necessary scripts are provided to read the files and training/testing split.
 
 ---
 
 ## Running the tracker
 
-Edit the variable ```task``` in the main file of a particular sub-dataset (```task=2``` is for testing with ground truth re-id). To simulate errors in re-identification, change ```task``` and edit ```opts.fpath``` in the main file to point the location of the ground-truth file.
+In scripts folder, run ```TEST_{script_name}.ipynb```  to run with the pretrained models, the script runs for NLPR set-4. To change the dataset, change the variable ```db_no```. The details of the dataset can be checked from ```get_pid_test_train.py``` in data folder.  
 
 
 ### Dependencies
 
-The code should run with basic matlab functions and doesn't require any sophisticated installation. 
+The code requires pytorch 1.1.0 and jupyter notebook (should work well with Python 3.5). Apart from it, you need to install scipy, matplotlib, numpy and hickle for loading and plotting purposes. 
 
 ### Pre-trained model
 
-The pre-trained model and results for each specific case of the simulation are provide in 'model' and 'results_icaps' directories respectively. 
+The pre-trained model and results for each specific case of the simulation are provide in 'models' . 
 
 ### Tables and Figures
-In folder 'metric', you will find various scripts to reproduce all tables and figures reported in the paper. Use [MCT evaluation kit](http://mct.idealtest.org/Datasets.html) to generate MCTA values from the results file. Result files are kept in ```results_icaps``` folder for every case. 
+In folder 'plots', you will find various scripts to reproduce all tables and figures reported in the paper. Use [MCT evaluation kit](http://mct.idealtest.org/Datasets.html) to generate MCTA values from the results file. Result files are kept in ```results_icaps``` folder for every case. 
 
 
 ### Training
 
-To train a model from scratch, set ```task=0``` in the main file. Edit epochs, the provided model was trained for 50K epochs. Since it is a table based method and it is not possible to include all possible cases so we have set maximum value of the ```telapse``` to be 200 and the policy behaves randomly after reaching this value.
+To train a model from scratch, use notebooks in any of the folder (supervised/semisup/unsupervised)  to train SER based policy for NLPR set-4. To train for a different dataset, change ```db_no``` in the notebook accordingly. 
 
-### Visualization
+The folder representation contains pre-trained AE models which needs to be used with every type of training to include latent representation of the history vector.
 
-To reproduce figure 4 of the paper. Edit the scripts in the train folder and uncomment following lines. Set first argument of subplot accordingly. 
-```
-    subplot(length(pALL(2:2:end)),1,rs_cnt);
-    a= [(repmat(gt_cam_allt',100,1)); zeros(5,length(gt_cam_allt)); (repmat(pr_cam_allt',100,1))];
-    colormap('hot');
-    imagesc(a);
-    set(gca,'ytick',50:100:200)
-    set(gca,'yticklabel',{'GT','Sel'})
-
-```
-
-
-## Remarks
-
-The related method are multi-camera multi-target and our method is multi-camera single target tracking. For fair comparison, we have run multiple parallel iterations of our method one for each target of the test set to make it multi-camera multi-target approach.
-
-
-## Extension and improvement in results
-
-We have extended the proposed approach by including random jumps in the exploration of the target's trajectory during training. This has provided significant improvement in accuracy, precision and recall. The code is available on request. 
-
-We have also used a re-identification implementation  of [[this paper](https://github.com/layumi/Person_reID_baseline_matconvnet)] to replace ```isTargetPresent()``` function used in training and testing functions. We are not providing the code but you are encouraged to use the linked implementation. 
-
+---
 
 If this code helps your research, please cite the following work which made it possible.
 
