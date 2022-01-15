@@ -4,7 +4,7 @@
 
 _Anil Sharma, Saket Anand, Sanjit K. Kaul_
 
-[[Paper](https://www.computer.org/csdl/)] [[BibTeX](https://www.computer.org/csdl/1o56xuliEpi/09232593)]
+[[Paper](https://openaccess.thecvf.com/content/WACV2022/papers/Sharma_Intelligent_Camera_Selection_Decisions_for_Target_Tracking_in_a_Camera_WACV_2022_paper.pdf)] [[BibTeX](https://openaccess.thecvf.com/content/WACV2022/html/Sharma_Intelligent_Camera_Selection_Decisions_for_Target_Tracking_in_a_Camera_WACV_2022_paper.html)]
 
 ---
 Camera selections were shown to be highly crucial for target tracking in a camera network but learning a camera selection policy is highly challenging for larger camera networks. In this work, we show the efficacy of representation learning to reduce training time and also to improve camera selection performance. We also train the RL policy in a semi-supervised way.
@@ -55,6 +55,15 @@ The folder representation contains pre-trained AE models which needs to be used 
 If this code helps your research, please cite the following work which made it possible.
 
 ```
+@InProceedings{Sharma_2022_WACV,
+    author    = {Sharma, Anil and Anand, Saket and Kaul, Sanjit K},
+    title     = {Intelligent Camera Selection Decisions for Target Tracking in a Camera Network},
+    booktitle = {Proceedings of the IEEE/CVF Winter Conference on Applications of Computer Vision (WACV)},
+    month     = {January},
+    year      = {2022},
+    pages     = {3388-3397}
+}
+
 @inproceedings{sharmaScheduleCameras,
   title =        {Reinforcement Learning based Querying in Camera Networks for Efficient Target Tracking},
   author =       {Sharma, Anil and Anand, Saket and Kaul, Sanjit},
