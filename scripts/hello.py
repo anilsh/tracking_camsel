@@ -1,337 +1,79 @@
-import random
-from faker import Faker
-from datetime import datetime, timedelta
+AriGraph:
 
-fake = Faker()
+The paper introduces AriGraph, a knowledge graph-based memory system for LLM agents to improve reasoning and planning in dynamic environments. Existing memory architectures (e.g., RAG, summarization) struggle with structured knowledge retention. AriGraph integrates semantic (factual) and episodic (experience-based) memories, enabling LLM agents to learn world models, retrieve relevant information, and explore environments more effectively.
 
-# Data Models for Simulation
-class Contact:
-    def __init__(self, name, relation, phone_number):
-        self.name = name
-        self.relation = relation
-        self.phone_number = phone_number
+Handling unstructured LLM memory – Converts raw experiences into structured knowledge graphs.
+Efficient long-term knowledge retention – Integrates semantic and episodic memory for improved recall.
+Effective reasoning & decision-making – Enables agents to plan and act based on structured world models.
+Scalability in dynamic environments – Allows incremental updates and efficient retrieval from memory.
 
-    def __str__(self):
-        return f"{self.name} ({self.relation})"
-
-class CallLog:
-    def __init__(self, contact, duration, timestamp):
-        self.contact = contact
-        self.duration = duration
-        self.timestamp = timestamp
-
-    def __str__(self):
-        return f"Call with {self.contact.name} ({self.duration} mins) on {self.timestamp}"
-
-class MessageLog:
-    def __init__(self, contact, message, timestamp):
-        self.contact = contact
-        self.message = message
-        self.timestamp = timestamp
-
-    def __str__(self):
-        return f"Message from {self.contact.name}: '{self.message}' on {self.timestamp}"
-
-# Simulate Contact Data
-def generate_contacts():
-    relations = ['Family', 'Friend', 'Colleague', 'Business']
-    contacts = []
-    
-    for _ in range(10):
-        name = fake.name()
-        relation = random.choice(relations)
-        phone_number = fake.phone_number()
-        contact = Contact(name, relation, phone_number)
-        contacts.append(contact)
-    
-    return contacts
-
-# Simulate Call Logs
-def generate_call_logs(contacts):
-    call_logs = []
-    for contact in contacts:
-        num_calls = random.randint(5, 15)
-        for _ in range(num_calls):
-            duration = random.randint(3, 30)  # Call duration in minutes
-            # Longer calls for family
-            if contact.relation == 'Family':
-                duration += random.randint(10, 20)
-            timestamp = fake.date_this_year() + timedelta(hours=random.randint(0, 23), minutes=random.randint(0, 59))
-            call_log = CallLog(contact, duration, timestamp)
-            call_logs.append(call_log)
-    
-    return call_logs
-
-# Simulate Message Logs
-def generate_message_logs(contacts):
-    message_logs = []
-    for contact in contacts:
-        num_messages = random.randint(5, 20)
-        for _ in range(num_messages):
-            message_type = random.choice(['Formal', 'Informal', 'Friendly', 'Business'])
-            # Custom messages based on relation
-            if message_type == 'Formal':
-                message = f"Hello, I would like to discuss the work-related matter with you."
-            elif message_type == 'Informal':
-                message = f"Hey! What's up?"
-            elif message_type == 'Friendly':
-                message = f"How's your day going? Let's catch up soon!"
-            else:  # Business
-                message = f"Please review the attached document, thank you."
-            
-            timestamp = fake.date_this_year() + timedelta(hours=random.randint(0, 23), minutes=random.randint(0, 59))
-            message_log = MessageLog(contact, message, timestamp)
-            message_logs.append(message_log)
-    
-    return message_logs
-
-# Convert data to Turtle format
-def convert_to_ttl(contacts, call_logs, message_logs):
-    ttl_data = []
-
-    # Prefixes
-    ttl_data.append("@prefix ex: <http://example.org/> .")
-    ttl_data.append("@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .")
-    
-    # Contacts
-    for contact in contacts:
-        ttl_data.append(f'ex:{contact.name.replace(" ", "")} a ex:Person ;')
-        ttl_data.append(f'    ex:hasPhoneNumber "{contact.phone_number}" ;')
-        ttl_data.append(f'    ex:hasRelation "{contact.relation}" ;')
-        ttl_data.append(f'    ex:hasName "{contact.name}" .\n')
-    
-    # Call Logs
-    for i, call_log in enumerate(call_logs):
-        ttl_data.append(f'ex:CallLog{i+1} a ex:CallLog ;')
-        ttl_data.append(f'    ex:hasContact ex:{call_log.contact.name.replace(" ", "")} ;')
-        ttl_data.append(f'    ex:hasDuration "{call_log.duration}"^^xsd:int ;')
-        ttl_data.append(f'    ex:hasTimestamp "{call_log.timestamp}"^^xsd:dateTime .\n')
-    
-    # Message Logs
-    for i, message_log in enumerate(message_logs):
-        ttl_data.append(f'ex:MessageLog{i+1} a ex:MessageLog ;')
-        ttl_data.append(f'    ex:hasContact ex:{message_log.contact.name.replace(" ", "")} ;')
-        ttl_data.append(f'    ex:hasMessage "{message_log.message}" ;')
-        ttl_data.append(f'    ex:hasTimestamp "{message_log.timestamp}"^^xsd:dateTime .\n')
-    
-    return "\n".join(ttl_data)
-
-# Simulate mobile data and convert to Turtle format
-def simulate_and_generate_ttl():
-    contacts = generate_contacts()
-    call_logs = generate_call_logs(contacts)
-    message_logs = generate_message_logs(contacts)
-
-    ttl_content = convert_to_ttl(contacts, call_logs, message_logs)
-
-    # Save the TTL data to a file
-    with open("mobile_data.ttl", "w") as ttl_file:
-        ttl_file.write(ttl_content)
-    
-    print("Turtle file 'mobile_data.ttl' generated successfully.")
-
-# Run the simulation and generate TTL file
-simulate_and_generate_ttl()
+Approach:
+Observation Processing – The LLM agent receives observations from the environment and extracts semantic triplets (object, relation, object).
+Then a Knowledge Graph is constructed – Semantic memory stores general factual knowledge, while episodic memory stores past experiences as interconnected nodes (by linking observations with semantic triples).
+The system then removes outdated knowledge and updates the graph dynamically as the agent interacts with the environment.
+Retrieval for Decision-Making – Uses semantic search (triplet-based) and episodic search (event-based) to retrieve relevant information for planning. A planning module generates sub-goals, and the decision-making module (ReAct framework) chooses the best action based on retrieved knowledge.
+Execution & Learning Loop – The agent performs the action, receives feedback, and updates its memory, continuously refining its world model.
 
 
+Zep: 
+Zep employs episodic memory within a temporally-aware knowledge graph (KG), constructed and updated through its Graphiti engine. The memory system is designed to ingest, structure, and retrieve time-sensitive knowledge while preserving historical context.
 
-@prefix ex: <http://example.org/> .
-@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+Zep organizes memory into three hierarchical graph substructures:
+1. Episodic Subgraph: Stores raw input data (messages, JSON, structured text) as episodic nodes
+2. Semantic Entity Subgraph: Extracts entities and relationships from episodes, resolving them against existing graph entities.
+3. Community Subgraph: Forms higher-level clusters of related entities, summarizing their interactions.
 
-# Contacts
-ex:JohnDoe a ex:Person ;
-    ex:hasPhoneNumber "+1234567890" ;
-    ex:hasRelation "Family" ;
-    ex:hasName "John Doe" .
+Temporal Knowledge Graph Updates: The system tracks four timestamps for each fact and relationship. Zep automatically invalidates outdated facts when newer, contradicting facts appear, ensuring the KG remains temporally consistent.
 
-ex:JaneSmith a ex:Person ;
-    ex:hasPhoneNumber "+9876543210" ;
-    ex:hasRelation "Friend" ;
-    ex:hasName "Jane Smith" .
+Memory-Driven Agent Context Construction: 
+Retrieved entities, facts, and relationships are structured into formatted context strings for LLMs.
+The system provides time-bounded, validated context, enabling agents to reason over evolving knowledge states.
+                                                                                                                                                           
+                                                                                                                                                           
+                                                                                                                                                           
+A*Net
 
-ex:AliceBrown a ex:Person ;
-    ex:hasPhoneNumber "+1122334455" ;
-    ex:hasRelation "Colleague" ;
-    ex:hasName "Alice Brown" .
+The paper introduces A*Net, a scalable path-based reasoning model for knowledge graphs (KGs) that improves efficiency in multi-hop reasoning by using a neural priority function inspired by the A shortest path algorithm* to prune unnecessary paths, reducing search space.
 
-ex:BobJohnson a ex:Person ;
-    ex:hasPhoneNumber "+9988776655" ;
-    ex:hasRelation "Business" ;
-    ex:hasName "Bob Johnson" .
 
-# Call Logs
-ex:CallLog1 a ex:CallLog ;
-    ex:hasContact ex:JohnDoe ;
-    ex:hasDuration "38"^^xsd:int ;
-    ex:hasTimestamp "2025-03-02T15:23:00"^^xsd:dateTime .
+Given a head entity (u) and query relation (q), A*Net aims to find the target entity (v) by searching important paths.
+Define Priority Function
 
-ex:CallLog2 a ex:CallLog ;
-    ex:hasContact ex:JaneSmith ;
-    ex:hasDuration "22"^^xsd:int ;
-    ex:hasTimestamp "2025-02-19T17:45:00"^^xsd:dateTime .
+Uses a learned priority function to score entities based on their importance to the query.
+The priority function is defined as:
+s(x)=d(u,x)⊗g(x,v)
+where d(u, x) is the shortest path distance from u to x, and g(x, v) estimates the remaining cost.
 
-ex:CallLog3 a ex:CallLog ;
-    ex:hasContact ex:AliceBrown ;
-    ex:hasDuration "10"^^xsd:int ;
-    ex:hasTimestamp "2025-01-15T14:30:00"^^xsd:dateTime .
+Instead of exploring all possible paths, A*Net selects the top-K most promising nodes and top-L edges per iteration based on the priority function.
 
-ex:CallLog4 a ex:CallLog ;
-    ex:hasContact ex:BobJohnson ;
-    ex:hasDuration "15"^^xsd:int ;
-    ex:hasTimestamp "2025-03-05T09:12:00"^^xsd:dateTime .
+This ensures that only the most relevant paths contribute to reasoning. The algorithm expands the graph until a valid answer is reached. Returns the most probable target entity (v) based on path scores.
 
-# Message Logs
-ex:MessageLog1 a ex:MessageLog ;
-    ex:hasContact ex:JohnDoe ;
-    ex:hasMessage "How's your day going? Let's catch up soon!" ;
-    ex:hasTimestamp "2025-02-10T11:22:00"^^xsd:dateTime .
+expansion refers to the process of selecting and exploring new nodes and edges in the knowledge graph (KG) during multi-hop reasoning. Instead of searching the entire graph, A*Net expands only the most promising paths based on a learned priority function, making reasoning more efficient.
+Expansion is to reduce the search path as compared to the addition of new entities/knowledge to the KG. 
 
-ex:MessageLog2 a ex:MessageLog ;
-    ex:hasContact ex:JaneSmith ;
-    ex:hasMessage "Hello, I would like to discuss the work-related matter with you." ;
-    ex:hasTimestamp "2025-03-08T14:12:00"^^xsd:dateTime .
 
-ex:MessageLog3 a ex:MessageLog ;
-    ex:hasContact ex:AliceBrown ;
-    ex:hasMessage "How are you doing today? Catch up later!" ;
-    ex:hasTimestamp "2025-01-17T09:55:00"^^xsd:dateTime .
+The paper introduces MStar, an inductive knowledge graph (KG) reasoning framework that enhances message propagation efficiency for distant entities. Implements a shortcut mechanism inspired by ResNet to allow faster propagation of conditional messages, reducing computational overhead.
 
-ex:MessageLog4 a ex:MessageLog ;
-    ex:hasContact ex:BobJohnson ;
-    ex:hasMessage "Please review the attached document, thank you." ;
-    ex:hasTimestamp "2025-03-01T10:45:00"^^xsd:dateTime .
+Starting Entities Selection (SES)
+A Pre-Embedded GNN encodes entities and selects multiple query-specific starting entities instead of a single source node.
+Selected entities broaden the reasoning scope, improving coverage for distant entities.
 
-import random
-from faker import Faker
-from datetime import datetime, timedelta
+Highway Layer for Message Propagation
+Constructs shortcut edges between the head entity and selected starting entities, inspired by skip connections in deep networks.
+Enables faster message passing across long distances in the KG.
 
-fake = Faker()
+A graph neural network (GNN) propagates relational information from the starting entities. A decoder (MLP-based) ranks candidate entities based on their updated embeddings.
 
-# Data Models for Simulation
-class Contact:
-    def __init__(self, name, relation, phone_number):
-        self.name = name
-        self.relation = relation
-        self.phone_number = phone_number
+The model predicts missing triplets by selecting the most relevant tail entity.
 
-    def __str__(self):
-        return f"{self.name} ({self.relation})"
-
-class CallLog:
-    def __init__(self, contact, duration, timestamp):
-        self.contact = contact
-        self.duration = duration
-        self.timestamp = timestamp
-
-    def __str__(self):
-        return f"Call with {self.contact.name} ({self.duration} mins) on {self.timestamp}"
-
-class MessageLog:
-    def __init__(self, contact, message, timestamp):
-        self.contact = contact
-        self.message = message
-        self.timestamp = timestamp
-
-    def __str__(self):
-        return f"Message from {self.contact.name}: '{self.message}' on {self.timestamp}"
-
-# Simulate Contact Data
-def generate_contacts():
-    relations = ['Family', 'Friend', 'Colleague', 'Business']
-    contacts = []
-    
-    for _ in range(10):
-        name = fake.name()
-        relation = random.choice(relations)
-        phone_number = fake.phone_number()
-        contact = Contact(name, relation, phone_number)
-        contacts.append(contact)
-    
-    return contacts
-
-# Simulate Call Logs
-def generate_call_logs(contacts):
-    call_logs = []
-    for contact in contacts:
-        num_calls = random.randint(5, 15)
-        for _ in range(num_calls):
-            duration = random.randint(3, 30)  # Call duration in minutes
-            # Longer calls for family
-            if contact.relation == 'Family':
-                duration += random.randint(10, 20)
-            timestamp = fake.date_this_year() + timedelta(hours=random.randint(0, 23), minutes=random.randint(0, 59))
-            call_log = CallLog(contact, duration, timestamp)
-            call_logs.append(call_log)
-    
-    return call_logs
-
-# Simulate Message Logs
-def generate_message_logs(contacts):
-    message_logs = []
-    for contact in contacts:
-        num_messages = random.randint(5, 20)
-        for _ in range(num_messages):
-            message_type = random.choice(['Formal', 'Informal', 'Friendly', 'Business'])
-            # Custom messages based on relation
-            if message_type == 'Formal':
-                message = f"Hello, I would like to discuss the work-related matter with you."
-            elif message_type == 'Informal':
-                message = f"Hey! What's up?"
-            elif message_type == 'Friendly':
-                message = f"How's your day going? Let's catch up soon!"
-            else:  # Business
-                message = f"Please review the attached document, thank you."
-            
-            timestamp = fake.date_this_year() + timedelta(hours=random.randint(0, 23), minutes=random.randint(0, 59))
-            message_log = MessageLog(contact, message, timestamp)
-            message_logs.append(message_log)
-    
-    return message_logs
-
-# Convert data to Turtle format
-def convert_to_ttl(contacts, call_logs, message_logs):
-    ttl_data = []
-
-    # Prefixes
-    ttl_data.append("@prefix ex: <http://example.org/> .")
-    ttl_data.append("@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .")
-    
-    # Contacts
-    for contact in contacts:
-        ttl_data.append(f'ex:{contact.name.replace(" ", "")} a ex:Person ;')
-        ttl_data.append(f'    ex:hasPhoneNumber "{contact.phone_number}" ;')
-        ttl_data.append(f'    ex:hasRelation "{contact.relation}" ;')
-        ttl_data.append(f'    ex:hasName "{contact.name}" .\n')
-    
-    # Call Logs
-    for i, call_log in enumerate(call_logs):
-        ttl_data.append(f'ex:CallLog{i+1} a ex:CallLog ;')
-        ttl_data.append(f'    ex:hasContact ex:{call_log.contact.name.replace(" ", "")} ;')
-        ttl_data.append(f'    ex:hasDuration "{call_log.duration}"^^xsd:int ;')
-        ttl_data.append(f'    ex:hasTimestamp "{call_log.timestamp}"^^xsd:dateTime .\n')
-    
-    # Message Logs
-    for i, message_log in enumerate(message_logs):
-        ttl_data.append(f'ex:MessageLog{i+1} a ex:MessageLog ;')
-        ttl_data.append(f'    ex:hasContact ex:{message_log.contact.name.replace(" ", "")} ;')
-        ttl_data.append(f'    ex:hasMessage "{message_log.message}" ;')
-        ttl_data.append(f'    ex:hasTimestamp "{message_log.timestamp}"^^xsd:dateTime .\n')
-    
-    return "\n".join(ttl_data)
-
-# Simulate mobile data and convert to Turtle format
-def simulate_and_generate_ttl():
-    contacts = generate_contacts()
-    call_logs = generate_call_logs(contacts)
-    message_logs = generate_message_logs(contacts)
-
-    ttl_content = convert_to_ttl(contacts, call_logs, message_logs)
-
-    # Save the TTL data to a file
-    with open("mobile_data.ttl", "w") as ttl_file:
-        ttl_file.write(ttl_content)
-    
-    print("Turtle file 'mobile_data.ttl' generated successfully.")
-
-# Run the simulation and generate TTL file
-simulate_and_generate_ttl()
+Short-Term Memory (Short Term Personal Memory Component 1052)
+Stores recent user interactions, including dialog history, UI selections, and recent requests.
+Maintains context-aware session data for interpreting follow-up commands (e.g., recognizing "in New York" as a reference to a previous weather query)​
+.
+Cached locally on client devices or server-side session storage for fast recall.
+Long-Term Memory (Long Term Personal Memory Component 1054)
+Persistently stores user-specific information, such as preferences, identities, contact lists, saved locations, shopping lists, entertainment history, and transaction records​
+.
+Supports contextual personalization by recalling previous selections and refining recommendations based on past interactions.
+Stored across databases, cloud storage, or external services for long-term retrieval.
+                                                                                                                                                           
