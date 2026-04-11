@@ -1,220 +1,27 @@
-Great — now we narrow this down to 5 strong, deployable pipelines (mobile-ready) similar to your image (clear flow, deterministic, robust).
-
-I’ll give each in the same style:
-
-Trigger logic
-
-Steps
-
-Why it works
-
-
-
----
-
-✅ 1. Embedding Similarity → Template (Primary Path)
-
-Flow
-
-User Query
-↓
-Vector Similarity (SLM embedding)
-↓
-Top Template (Qi) + score
-↓ (if score ≥ threshold)
-Entity Extraction (NER)
-↓
-Fill SPARQL
-↓
-Execute KG
-
-Why this works
-
-Fast (single embedding + dot product)
-
-Robust to paraphrases
-
-Already in your design
-
-
-
----
-
-✅ 2. Keyword + Rule-based Routing (Fallback)
-
-Flow
-
-User Query
-↓
-Keyword Detection (most, recent, location, interest, etc.)
-↓
-Rule Mapping → Template (Qi)
-↓
-Entity Extraction
-↓
-Fill SPARQL
-↓
-Execute KG
-
-Why this works
-
-Deterministic
-
-Handles edge cases where embeddings fail
-
-Very cheap on mobile
-
-
-
----
-
-✅ 3. Hybrid: Similarity + Constraint Validation (Best Practical)
-
-Flow
-
-User Query
-↓
-Vector Similarity → Top-K templates
-↓
-Entity Extraction (NER)
-↓
-Constraint Check (time, person, category)
-↓
-Select best valid template
-↓
-Fill SPARQL
-↓
-Execute KG
-
-Why this works
-
-Avoids wrong template selection
-
-Uses KG constraints (important for temporal queries)
-
-High accuracy without heavy models
-
-
-
----
-
-✅ 4. Lightweight Classification → Template
-
-Flow
-
-User Query
-↓
-Intent Classifier (Q01–Q15)
-↓
-Template Selection (Qi)
-↓
-Entity Extraction
-↓
-Fill SPARQL
-↓
-Execute KG
-
-Why this works
-
-Very fast (small classifier)
-
-Stable mapping to predefined queries
-
-Works well when query space is fixed
-
-
-
----
-
-✅ 5. NER-first → Graph-aware Routing
-
-Flow
-
-User Query
-↓
-Entity Extraction (NER)
-↓
-Entity Linking (KG nodes)
-↓
-Infer possible relations from KG
-↓
-Template Selection (Qi)
-↓
-Fill SPARQL
-↓
-Execute KG
-
-Why this works
-
-Uses KG structure (not just text)
-
-Good for ambiguous queries
-
-Handles entity-heavy queries well
-
-
-
----
-
-🚫 What we are NOT choosing (important)
-
-Not suitable for mobile:
-
-❌ Full LLM generation (KGT5 seq2seq)
-
-❌ REBEL triple generation
-
-❌ Complex reasoning models (GNN inference heavy)
-
-❌ Free-form parsing
-
-
-
----
-
-🔑 Final Combined Architecture (Recommended)
-
-You can combine 1 + 2 + 3:
-
-User Query
-↓
-Vector Similarity
-↓ (if confident)
-Template Selected
-↓
-NER → Fill SPARQL
-
-ELSE
-↓
-Keyword + Rule Mapping
-↓
-Template
-
-ELSE
-↓
-Top-K + Constraint Validation
-↓
-Template
-
-↓
-Execute KG
-
-
----
-
-🧠 Key Insight (for your slide)
-
-All robust mobile pipelines reduce to:
-Template Selection + Slot Filling + KG Execution
-
-
----
-
-📌 One-line summary
-
-Use embedding similarity as primary routing, rules as fallback, and constraint validation to ensure correct template selection before SPARQL execution.
-
-
----
-
-If you want, I can convert this into a clean diagram exactly like your slide (with YES/NO branches and thresholds) so it directly fits your presentation.
+Here is a draft for a 2-page extended abstract tailored for mobile device use cases, emphasizing the Day Context Embeddings (DCE) and highlighting the framework's efficiency and privacy-preserving capabilities.
+# ContextGraph: On-Device Temporal Knowledge Graphs for Mobile Lifelog Intelligence
+### Abstract
+Modern smartphones continuously capture a heterogeneous stream of multimodal personal data, presenting a unique opportunity for lifelog intelligence. However, existing personal assistants primarily focus on episodic memory retrieval rather than reasoning about evolving user behaviors. We introduce ContextGraph, an on-device lifelog intelligence framework that models smartphone data as a Temporal Knowledge Graph (TKG). To enable efficient mobile processing of sparse and dynamic user data, we propose Day Context Embeddings (DCE), a dual Variational Autoencoder (VAE) architecture that encodes both the temporal rhythm and semantic context of daily activities. By operating directly on-device, DCE enables privacy-preserving longitudinal reasoning, outperforming traditional graph embedding methods in both accuracy and computational efficiency.
+### 1. Introduction
+Smartphones have evolved into powerful multimodal platforms that log location traces, app usage, media interactions, and social communications. While current lifelogging systems excel at retrieval (e.g., "photos from last Monday"), they lack the capacity to infer gradual lifestyle changes, forming habits, or emerging routines.
+Modeling this data presents significant challenges for mobile deployment. Smartphone data is inherently fragmented, heterogeneous, and suffers from severe sparsity. For instance, recent surveys indicate that 78% of Android users globally keep their location settings disabled. To achieve true lifelog intelligence without relying on cloud processing or invasive data collection, systems must perform robust temporal reasoning directly on-device using available sparse signals. ContextGraph addresses this by constructing an on-device TKG, leveraging a novel Day Context Embedding (DCE) module designed specifically for the computational constraints and dynamic nature of mobile lifelogs.
+### 2. Methodology: Modeling Lifelogs for Mobile
+**2.1 Temporal Knowledge Graph Construction**
+ContextGraph unifies fragmented smartphone data into an evolving RDF-based TKG with precise timestamps. Media (processed via lightweight on-device CLIP models for scene/object detection), text logs, and sensor data are mapped to a custom ontology. This approach flexibly integrates multimodal data, circumventing the rigid schemas of traditional databases and naturally handling missing modalities (e.g., disabled GPS).
+**2.2 Day Context Embeddings (DCE)**
+Existing graph embedding techniques like Node2Vec capture structural topology but remain blind to the temporal sequence and rhythm of human behavior. To address this, ContextGraph introduces DCE, which utilizes a dual VAE architecture to learn a comprehensive 128-dimensional embedding for each daily TKG snapshot.
+ * **Temporal-VAE:** Encodes the temporal rhythm of events. It processes a time-ordered sequence of events, incorporating cyclic encoding and normalized time lags into a bidirectional LSTM. This captures the distinction between an activity occurring at 1 PM versus 8 PM.
+ * **Context-GVAE:** Learns the relational graph structure (the "who, where, and what"). Built upon a Heterogeneous Graph Attention Network (HAN), it projects diverse node features into a common latent space, producing context-aware embeddings optimized via a link prediction task.
+By fusing these latent representations, DCE provides a holistic, low-dimensional vector representing the user's complex daily dynamics.
+**2.3 Contextual Subgraph Evolution (Lens)**
+To provide actionable intelligence, ContextGraph utilizes a "Lens" module. It identifies volatile anchor nodes (e.g., a sudden spike in step count or a new payment pattern). Lens then extracts a context-aware subgraph around this anchor and tracks its evolution across future snapshots. By computing graph-level and node-level similarities, the system generates an evolution signature (e.g., Growth, Decay, Drift, Static), allowing the mobile assistant to reason about behavioral stability.
+### 3. Experiments and Mobile Use Cases
+We evaluated ContextGraph using both large-scale Temporal Point Process (TPP) simulated data and real-world smartphone data from 25 users spanning over a year.
+**3.1 Representation and Classification**
+DCE effectively captures the multifaceted dynamics of daily events. Classification tasks on TPP-derived data demonstrate that the aggregate DCE outperforms traditional methods, achieving a Macro F1-score of **0.711**, compared to 0.588 for Node2Vec and 0.538 for DeepWalk. Frequency-based baselines like PELT failed to capture contextual aspects, achieving only a 0.461 F1-score.
+**3.2 Computational Efficiency for On-Device Processing**
+A critical requirement for mobile lifelog intelligence is computational efficiency. In our runtime analysis on a single graph, traditional methods like Node2Vec and DeepWalk required an average of 100 seconds to generate embeddings. In contrast, the DCE aggregate computation took only **8 seconds**. This represents an **87.5% reduction in computation time**, making continuous, daily embedding updates highly feasible on mobile hardware.
+**3.3 Privacy-Preserving Travel Detection**
+To test real-world applicability under sparse data conditions, we applied ContextGraph to detect travel routines when users have location services disabled. While a standard Temporal Travel Pattern Detection (TTPD) baseline achieved only 0.54 accuracy and 0.58 recall, the Lens module combined with our Travel Detector (TD) achieved **0.98 accuracy** and **0.84 recall** without relying on GPS coordinates. By tracking the evolution signatures (growth/decay) of semantic subgraphs (e.g., new faces, unfamiliar scenes), the system accurately inferred travel transitions purely from local contextual cues.
+### 4. Conclusion
+ContextGraph advances mobile personal assistants from simple memory retrieval to proactive behavioral reasoning. By modeling smartphone data as a TKG and utilizing the highly efficient Day Context Embeddings, the framework successfully captures both the temporal rhythm and semantic richness of user routines. Its ability to operate accurately under severe data sparsity, combined with an 87.5% reduction in processing time, positions ContextGraph as a highly practical framework for on-device, privacy-preserving lifelog intelligence.
